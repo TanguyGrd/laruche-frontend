@@ -24,14 +24,3 @@
     "autoprefixer": "^10.4.0"
   }
 }
-```
-
-✅ **Commit**
-
----
-
-### 📄 FICHIER 2 : `next.config.js`
-
-**Nom du fichier** :
-```
-next.config.js
