@@ -329,7 +329,7 @@ const ProductCard = ({ product, onClick }: { product: Product; onClick: () => vo
             <span>Marketing</span>
           </button>
           
-          
+          <a
             href={product.link}
             target="_blank"
             rel="noopener noreferrer"
