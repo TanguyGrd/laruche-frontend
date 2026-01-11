@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   Search, Sparkles, Lock, Check, Crown, Loader2, AlertCircle, DollarSign,
-  Home, TrendingUp, CreditCard, Star, Truck, ShieldCheck, Package, Target
+  Home, Star, Truck, ShieldCheck, Package, Target, TrendingUp
 } from 'lucide-react';
 
 type PlanType = 'STARTER' | 'PRO' | 'BUSINESS' | 'ELITE';
@@ -31,7 +31,7 @@ const PLANS = [
     name: 'Starter',
     price: '0€',
     credits: '3 crédits',
-    features: ['Recherche produits', 'Infos vendeur', 'Notes & avis', '3 déblocages']
+    features: ['Recherche produits', 'Infos qualité', 'Notes & avis', '3 déblocages']
   },
   {
     id: 'PRO' as PlanType,
@@ -57,6 +57,33 @@ const PLANS = [
   }
 ];
 
+// Générer un titre masqué intelligent
+const getMaskedTitle = (title: string): string => {
+  const words = title.toLowerCase().split(' ');
+  
+  // Détection catégorie
+  if (words.some(w => ['laptop', 'pc', 'computer', 'ordinateur'].includes(w))) {
+    return 'Ordinateur Portable Premium';
+  }
+  if (words.some(w => ['phone', 'smartphone', 'iphone', 'samsung'].includes(w))) {
+    return 'Smartphone High-Tech';
+  }
+  if (words.some(w => ['watch', 'montre', 'smartwatch'].includes(w))) {
+    return 'Montre Connectée';
+  }
+  if (words.some(w => ['headphone', 'casque', 'écouteur', 'earphone'].includes(w))) {
+    return 'Audio Premium';
+  }
+  if (words.some(w => ['gaming', 'gamer', 'jeu'].includes(w))) {
+    return 'Accessoire Gaming';
+  }
+  if (words.some(w => ['cable', 'câble', 'chargeur', 'charger'].includes(w))) {
+    return 'Accessoire Électronique';
+  }
+  
+  return 'Produit Premium';
+};
+
 const ProductCard = ({
   product,
   plan,
@@ -73,14 +100,11 @@ const ProductCard = ({
   const hasProFeatures = ['PRO', 'BUSINESS', 'ELITE'].includes(plan);
   const hasBusinessFeatures = ['BUSINESS', 'ELITE'].includes(plan);
   
-  // Calcul fiabilité vendeur basé sur ventes
   const sellerTrust = product.sales > 1000 ? 98 : product.sales > 500 ? 95 : product.sales > 100 ? 92 : 88;
-  
-  // Délai livraison basé sur prix (estimation)
   const deliveryDays = product.shipping_cost === 0 ? '3-5 jours' : '5-10 jours';
   
-  // Description courte générée
-  const shortDesc = `${product.title.split(' ').slice(0, 8).join(' ')}...`;
+  // Prix masqué (fourchette)
+  const priceRange = product.cost_price < 20 ? '€ - €€' : product.cost_price < 50 ? '€€ - €€€' : '€€€+';
 
   return (
     <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
@@ -88,32 +112,52 @@ const ProductCard = ({
       <div className="relative aspect-square bg-black/20">
         <img
           src={product.image}
-          alt={product.title}
-          className={`w-full h-full object-cover ${unlocked ? '' : 'blur-sm grayscale'}`}
+          alt="Produit"
+          className={`w-full h-full object-cover transition-all ${unlocked ? '' : 'blur-md grayscale'}`}
         />
         {!unlocked && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-2">
             <Lock className="w-12 h-12 text-amber-400" strokeWidth={2} />
+            <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-lg backdrop-blur-sm">
+              <p className="text-xs font-bold text-amber-400 uppercase">Verrouillé</p>
+            </div>
           </div>
         )}
       </div>
 
       {/* Content */}
       <div className="p-4 space-y-3">
-        {/* Title - Toujours visible */}
-        <h3 className="text-sm font-medium text-white line-clamp-2 min-h-[40px]">
-          {product.title}
-        </h3>
+        {/* Title - Masqué ou Réel */}
+        <div className="min-h-[44px]">
+          {unlocked ? (
+            <h3 className="text-sm font-medium text-white line-clamp-2 leading-tight">
+              {product.title}
+            </h3>
+          ) : (
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-white">
+                {getMaskedTitle(product.title)}
+              </h3>
+              <p className="text-xs text-amber-400 flex items-center gap-1">
+                <Lock className="w-3 h-3" strokeWidth={2} />
+                <span>Débloquez pour voir le titre complet</span>
+              </p>
+            </div>
+          )}
+        </div>
 
-        {/* Infos Visibles pour TOUS (même STARTER) */}
+        {/* Infos Toujours Visibles */}
         <div className="space-y-2">
           {/* Note & Avis */}
-          <div className="flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5">
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" strokeWidth={2} />
-              <span className="font-bold text-white">{product.rating.toFixed(1)}</span>
+              <span className="font-bold text-white">{product.rating.toFixed(1)}/5</span>
+              <span className="text-white/50">({product.sales.toLocaleString()} avis)</span>
             </div>
-            <span className="text-white/50">({product.sales.toLocaleString()} avis)</span>
+            {!unlocked && (
+              <div className="text-[10px] text-white/40 font-mono">{priceRange}</div>
+            )}
           </div>
 
           {/* Livraison */}
@@ -128,14 +172,32 @@ const ProductCard = ({
             <span>Vendeur fiable ({sellerTrust}%)</span>
           </div>
 
-          {/* Description courte */}
-          <div className="p-2 bg-white/[0.03] rounded-lg">
-            <p className="text-[11px] text-white/60 line-clamp-2">{shortDesc}</p>
+          {/* Badge Qualité */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-1.5 px-2 py-1.5 bg-white/[0.03] border border-white/10 rounded-lg">
+              <Package className="w-3.5 h-3.5 text-purple-400" strokeWidth={2} />
+              <span className="text-[11px] text-white/70">Qualité vérifiée</span>
+            </div>
+            {product.sales > 500 && (
+              <div className="px-2 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" strokeWidth={2} />
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Profit Calculator - PRO+ uniquement */}
-        {hasProFeatures && (
+        {/* Prix Réel - Visible APRÈS déblocage */}
+        {unlocked && (
+          <div className="p-2 bg-white/[0.03] border border-white/10 rounded-lg">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-white/50">Prix fournisseur</span>
+              <span className="text-base font-bold text-white">€{product.cost_price.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Profit Calculator - PRO+ */}
+        {hasProFeatures && unlocked && (
           <div className="p-3 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-xl">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="w-3.5 h-3.5 text-amber-400" strokeWidth={2.5} />
@@ -143,20 +205,20 @@ const ProductCard = ({
               <span className="ml-auto text-[9px] px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full font-bold">PRO</span>
             </div>
             <div className="flex items-end justify-between">
-              <div>
-                <div className="text-xs text-white/50">Coût: €{product.cost_price.toFixed(2)}</div>
-                <div className="text-xs text-white/50">Vente: €{product.suggested_price.toFixed(2)}</div>
+              <div className="space-y-0.5">
+                <div className="text-[10px] text-white/40">Coût total</div>
+                <div className="text-xs font-mono text-white/70">€{(product.cost_price + product.shipping_cost + 10).toFixed(2)}</div>
               </div>
               <div className="text-right">
                 <div className="text-xl font-bold text-amber-400">€{product.net_profit.toFixed(2)}</div>
-                <div className="text-[10px] text-amber-400/70">{product.profit_margin.toFixed(0)}%</div>
+                <div className="text-[10px] text-amber-400/70">{product.profit_margin.toFixed(0)}% marge</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Saturation Score - BUSINESS+ uniquement */}
-        {hasBusinessFeatures && (
+        {/* Saturation - BUSINESS+ */}
+        {hasBusinessFeatures && unlocked && (
           <div className="flex items-center justify-between p-2 bg-white/[0.03] rounded-lg">
             <div className="flex items-center gap-2">
               <Target className="w-3.5 h-3.5 text-purple-400" strokeWidth={2} />
@@ -189,7 +251,7 @@ const ProductCard = ({
             }`}
           >
             <Sparkles className="w-4 h-4" strokeWidth={2.5} />
-            Butiner (1 Crédit)
+            <span>Butiner ce Produit</span>
           </button>
         ) : (
           <a
@@ -199,7 +261,7 @@ const ProductCard = ({
             className="w-full h-10 flex items-center justify-center gap-2 bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 text-emerald-400 rounded-xl font-semibold text-sm transition-all"
           >
             <Check className="w-4 h-4" strokeWidth={2.5} />
-            Lien Source ✓
+            <span>Voir sur AliExpress</span>
           </a>
         )}
       </div>
